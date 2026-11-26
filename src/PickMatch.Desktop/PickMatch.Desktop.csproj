@@ -33,6 +33,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- App icon: Uno turns it into the macOS .icns, the Linux and window icons. -->
+    <UnoIcon Include="Assets\Icons\icon.svg" Color="#202026" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\PickMatch.Core\PickMatch.Core.csproj" />
   </ItemGroup>
 
