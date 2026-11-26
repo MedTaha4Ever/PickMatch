@@ -18,6 +18,8 @@
     <ApplicationPublisher>PickMatch</ApplicationPublisher>
     <Description>Match client-picked photos to the original RAW/JPG files</Description>
     <UnoFeatures>Skia;</UnoFeatures>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
     <NoWarn>$(NoWarn);NU1507;NETSDK1201;PRI257</NoWarn>
   </PropertyGroup>
 
