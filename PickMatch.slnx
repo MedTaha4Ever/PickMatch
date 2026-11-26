@@ -4,8 +4,9 @@
     <Platform Name="ARM64" />
   </Configurations>
   <Folder Name="/src/">
-    <Project Path="src/TahaCull/TahaCull.csproj" />
-    <Project Path="src/TahaCull.Core/TahaCull.Core.csproj" />
+    <Project Path="src/PickMatch/PickMatch.csproj" />
+    <Project Path="src/PickMatch.Desktop/PickMatch.Desktop.csproj" />
+    <Project Path="src/PickMatch.Core/PickMatch.Core.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/MatchCheck/MatchCheck.csproj" />

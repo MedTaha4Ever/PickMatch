@@ -22,15 +22,15 @@ jobs:
         with:
           dotnet-version: 9.0.x
       - name: Publish
-        run: dotnet publish src/TahaCull/TahaCull.csproj -c Release -r win-${{ matrix.arch }} -p:Platform=${{ matrix.arch }} -o publish/TahaCull
+        run: dotnet publish src/PickMatch/PickMatch.csproj -c Release -r win-${{ matrix.arch }} -p:Platform=${{ matrix.arch }} -o publish/PickMatch
       - name: Zip
-        run: Compress-Archive -Path publish/TahaCull -DestinationPath TahaCull-win-${{ matrix.arch }}.zip
+        run: Compress-Archive -Path publish/PickMatch -DestinationPath PickMatch-win-${{ matrix.arch }}.zip
       - uses: actions/upload-artifact@v4
         with:
-          name: TahaCull-win-${{ matrix.arch }}
-          path: TahaCull-win-${{ matrix.arch }}.zip
+          name: PickMatch-win-${{ matrix.arch }}
+          path: PickMatch-win-${{ matrix.arch }}.zip
       - name: Release (tags only)
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: TahaCull-win-${{ matrix.arch }}.zip
+          files: PickMatch-win-${{ matrix.arch }}.zip

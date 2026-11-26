@@ -1,6 +1,6 @@
 using System.Buffers.Binary;
 
-namespace TahaCull.Core;
+namespace PickMatch.Core;
 
 /// <summary>An embedded JPEG inside a file (RAW preview), or the whole file when it is a JPEG.</summary>
 public readonly record struct JpegBlob(long Offset, long Length, int Width, int Height)

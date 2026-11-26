@@ -1,4 +1,4 @@
-namespace TahaCull.Core;
+namespace PickMatch.Core;
 
 public enum MatchKind { None, FileName, Ocr, Image, Manual }
 
@@ -34,7 +34,7 @@ public sealed class MatchEngine
     public async Task<MatchResult> MatchAsync(string clientPath, CancellationToken ct = default)
     {
         var info = new PhotoInfo { WholeFileIsImage = true };
-        using var bmp = await Imaging.DecodeAsync(clientPath, info, 640);
+        var bmp = await Imaging.DecodeAsync(clientPath, info, 640);
         if (bmp == null) return new MatchResult { ClientPath = clientPath, Warning = "Windows can't open this picture" };
         var gray = Imaging.ToGray(bmp, Matcher.ClientSize);
 

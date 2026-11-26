@@ -1,9 +1,12 @@
 // Command-line check of the matching, without the app:
 //   MatchCheck <photosFolder> <clientFolder> [expected.tsv] [excludeFolder]...   expected.tsv: clientFileName<TAB>photoName
+//   MatchCheck --selftest                                          made-up pictures, exit code 1 if a match is wrong
 //   MatchCheck --info <file>...                                    show what is read from photo files
-//   set TAHACULL_COPY_TO=<folder> to also copy the auto-confirmed picks there (RAW + JPG + sidecars, no renaming)
+//   set PICKMATCH_COPY_TO=<folder> to also copy the auto-confirmed picks there (RAW + JPG + sidecars, no renaming)
 using System.Diagnostics;
-using TahaCull.Core;
+using PickMatch.Core;
+
+if (args.Length > 0 && args[0] == "--selftest") return await SelfTest.RunAsync();
 
 if (args.Length > 0 && args[0] == "--info")
 {
@@ -11,10 +14,10 @@ if (args.Length > 0 && args[0] == "--info")
     {
         var sw0 = Stopwatch.StartNew();
         var i = PhotoReader.Read(f);
-        using var bmp = await Imaging.DecodeAsync(f, i, 320);
-        Console.WriteLine($"{Path.GetFileName(f)}: date={i.DateTaken} orient={i.Orientation} jpegs=[{string.Join(", ", i.Jpegs.Select(j => $"{j.Width}x{j.Height}@{j.Offset}"))}] decoded={bmp?.PixelWidth}x{bmp?.PixelHeight} {sw0.ElapsedMilliseconds}ms");
+        var bmp = await Imaging.DecodeAsync(f, i, 320);
+        Console.WriteLine($"{Path.GetFileName(f)}: date={i.DateTaken} orient={i.Orientation} jpegs=[{string.Join(", ", i.Jpegs.Select(j => $"{j.Width}x{j.Height}@{j.Offset}"))}] decoded={bmp?.Width}x{bmp?.Height} {sw0.ElapsedMilliseconds}ms");
     }
-    return;
+    return 0;
 }
 
 var sw = Stopwatch.StartNew();
@@ -41,10 +44,11 @@ foreach (var c in MatchEngine.ClientPictures(args[1]))
 }
 Console.WriteLine($"Correct {ok}/{n}; auto-confirmed right {okAuto}, auto-confirmed WRONG {wrongAuto}; total {sw.Elapsed.TotalSeconds:0.0}s");
 
-if (Environment.GetEnvironmentVariable("TAHACULL_COPY_TO") is { Length: > 0 } outDir)
+if (Environment.GetEnvironmentVariable("PICKMATCH_COPY_TO") is { Length: > 0 } outDir)
 {
     var rep = FileCopier.Copy(picks, outDir, new CopyOptions(true, true, true, false));
     Console.WriteLine($"Copy: {rep.Copied} copied, {rep.AlreadyThere} already there, problems: {string.Join("; ", rep.Problems)}");
     rep = FileCopier.Copy(picks, outDir, new CopyOptions(true, true, true, false));
     Console.WriteLine($"Copy again: {rep.Copied} copied, {rep.AlreadyThere} already there");
 }
+return wrongAuto == 0 && ok == n ? 0 : 1;

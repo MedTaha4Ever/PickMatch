@@ -1,26 +1,24 @@
 using System.Text;
 using System.Text.RegularExpressions;
-using Windows.Graphics.Imaging;
-using Windows.Media.Ocr;
 
-namespace TahaCull.Core;
+namespace PickMatch.Core;
 
 /// <summary>
 /// Finds a photo's file name in a client picture: in the client file's own name (e.g. "IMG_1234 (1).jpg"),
-/// or written on the picture (gallery and screenshot labels) using the OCR built into Windows.
+/// or written on the picture (gallery and screenshot labels) using text recognition: the OCR built into Windows,
+/// or Tesseract on Linux and macOS when it is installed.
 /// </summary>
 public sealed partial class NameReader
 {
     readonly Dictionary<string, string> _byKey = new(); // confusable-folded name -> real name
-    readonly OcrEngine? _ocr;
+    readonly ITextRecognizer? _ocr;
 
     public bool OcrAvailable => _ocr != null;
 
     public NameReader(IEnumerable<string> names)
     {
         foreach (var n in names) _byKey.TryAdd(Key(n), n);
-        _ocr = OcrEngine.TryCreateFromUserProfileLanguages()
-               ?? OcrEngine.TryCreateFromLanguage(new Windows.Globalization.Language("en-US"));
+        _ocr = TextRecognizer.Create();
     }
 
     /// <summary>Characters OCR often confuses are folded together, so "9A2A33I4" still finds 9A2A3314.</summary>
@@ -63,25 +61,21 @@ public sealed partial class NameReader
 
     public List<string> FromFileName(string path) => FindIn(Path.GetFileNameWithoutExtension(path));
 
-    /// <summary>OCR the picture as is, then enlarged (helps with small labels on screenshots).</summary>
+    /// <summary>Read the text on the picture as is, then enlarged (helps with small labels on screenshots).</summary>
     public async Task<List<string>> FromPictureAsync(string path)
     {
         if (_ocr == null) return [];
         try
         {
-            var info = new PhotoInfo { WholeFileIsImage = true };
-            uint max = OcrEngine.MaxImageDimension;
-            using (var bmp = await Imaging.DecodeAsync(path, info, (int)max))
+            foreach (int zoom in new[] { 1, 2 })
             {
-                if (bmp == null) return [];
-                var hits = FindIn((await _ocr.RecognizeAsync(bmp)).Text);
+                var text = await _ocr.ReadAsync(path, zoom);
+                if (text == null) break;
+                var hits = FindIn(text);
                 if (hits.Count > 0) return hits;
-                if (Math.Max(bmp.PixelWidth, bmp.PixelHeight) * 2 > max) return [];
-                using var big = await Imaging.DecodeAsync(path, info, Math.Max(bmp.PixelWidth, bmp.PixelHeight) * 2, allowUpscale: true);
-                if (big == null) return [];
-                return FindIn((await _ocr.RecognizeAsync(big)).Text);
             }
         }
-        catch { return []; }
+        catch { }
+        return [];
     }
 }

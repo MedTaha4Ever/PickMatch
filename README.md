@@ -1,17 +1,17 @@
-# TahaCull
+# PickMatch
 
 [![Donate with Wise](https://img.shields.io/badge/Donate-Wise-9FE870?logo=wise&logoColor=163300)](https://wise.com/pay/me/medb5)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 A Windows 11 app for after the client has chosen their photos. The client sends back the pictures they picked:
-WhatsApp copies, screenshots or low-res JPGs. TahaCull finds the original RAW/JPG for each one, you check the pairs
+WhatsApp copies, screenshots or low-res JPGs. PickMatch finds the original RAW/JPG for each one, you check the pairs
 side by side, and it copies the originals to a separate folder.
 
 ## Using it
 
 1. **Photos**: the shoot folder. All subfolders are searched (e.g. `Mariage\cr3`, `Outia\Compressed`).
 2. **Client picks**: the folder with the pictures the client sent.
-3. **Find originals**. For each client picture, TahaCull tries:
+3. **Find originals**. For each client picture, PickMatch tries:
    - the **file name** (e.g. `DSC_1234 (1).jpg`)
    - a **file name written on the picture** (gallery or screenshot labels), read with the text recognition built into Windows
    - **image similarity**: crops, screenshots and heavy compression are fine
@@ -25,7 +25,7 @@ side by side, and it copies the originals to a separate folder.
    **Options** sets what is copied: RAW files, JPG files, edit sidecars (`.xmp`, `.pp3`, `.dop`…), and whether
    to rename the client's pictures to the original names. Nothing is ever overwritten.
 
-You can also start it with both folders: `TahaCull.exe "D:\Shoot" "D:\Shoot\client"`.
+You can also start it with both folders: `PickMatch.exe "D:\Shoot" "D:\Shoot\client"`.
 
 ## Files it reads
 
@@ -34,7 +34,7 @@ You can also start it with both folders: `TahaCull.exe "D:\Shoot" "D:\Shoot\clie
 | RAW | Canon CR3, CR2, CRW · Nikon NEF, NRW · Sony ARW, SRF, SR2 · Fujifilm RAF · Panasonic/Leica RW2, RWL, RAW · Olympus/OM ORF · Pentax PEF · Samsung SRW · Adobe DNG (and GoPro GPR) · Hasselblad 3FR, FFF · Phase One IIQ · Kodak, Leaf, Mamiya, Epson, Sigma and others |
 | Images | JPG, PNG, TIFF, HEIC/HEIF, AVIF, WebP, JPEG XL, BMP |
 
-RAW files are never developed. TahaCull reads the full-size JPEG preview the camera stores inside every RAW, which is
+RAW files are never developed. PickMatch reads the full-size JPEG preview the camera stores inside every RAW, which is
 fast: about 1,000 photos load in under a minute from a hard disk. For RAW files without a readable preview it uses
 Windows' own codec, the free **Raw Image Extension** from the Microsoft Store. HEIC, AVIF, WebP and JPEG XL need their
 Store extensions too.
@@ -47,8 +47,8 @@ both produce `IMG_0001` stay separate.
 Needs Windows 10/11 and the .NET 9 SDK. The project uses the Windows App SDK 2.7 (WinUI 3), unpackaged and self-contained.
 
 ```
-dotnet build src/TahaCull -c Release
-dotnet publish src/TahaCull -c Release -r win-x64 -o publish/TahaCull
+dotnet build src/PickMatch -c Release
+dotnet publish src/PickMatch -c Release -r win-x64 -o publish/PickMatch
 ```
 
 `tests/MatchCheck` checks the matching from the command line:
@@ -62,7 +62,7 @@ GitHub Actions builds x64 and ARM64 zips on every push. A `v*` tag also publishe
 
 ## Support
 
-TahaCull is free. If it saves you time, you can [buy me a coffee through Wise](https://wise.com/pay/me/medb5).
+PickMatch is free. If it saves you time, you can [buy me a coffee through Wise](https://wise.com/pay/me/medb5).
 
 ## License
 

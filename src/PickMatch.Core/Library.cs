@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 
-namespace TahaCull.Core;
+namespace PickMatch.Core;
 
 public sealed class PhotoFile
 {
@@ -96,7 +96,7 @@ public sealed class Library
         await Parallel.ForEachAsync(lib.Photos, new ParallelOptions { CancellationToken = ct, MaxDegreeOfParallelism = Math.Max(2, Environment.ProcessorCount) }, async (sp, _) =>
         {
             var pf = sp.PreviewFile;
-            using var bmp = await Imaging.DecodeAsync(pf.Path, pf.Info, 320);
+            var bmp = await Imaging.DecodeAsync(pf.Path, pf.Info, 320);
             if (bmp != null)
             {
                 sp.Fine = Imaging.ToGray(bmp, Matcher.FineSize);

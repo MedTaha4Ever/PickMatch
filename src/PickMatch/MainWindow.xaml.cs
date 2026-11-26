@@ -10,12 +10,12 @@ using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
-using TahaCull.Core;
+using PickMatch.Core;
+using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.Graphics;
-using Windows.Graphics.Imaging;
 using Windows.System;
 
-namespace TahaCull;
+namespace PickMatch;
 
 public sealed partial class MainWindow : Window
 {
@@ -32,14 +32,20 @@ public sealed partial class MainWindow : Window
     PairItem? _compareItem;
 
     static readonly string SettingsPath = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TahaCull", "settings.json");
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "PickMatch", "settings.json");
 
     public MainWindow()
     {
         InitializeComponent();
+#if HAS_UNO
+        // Linux/macOS: the system draws the title bar.
+        AppTitleBar.Visibility = Visibility.Collapsed;
+        try { AppWindow.Resize(new SizeInt32(1440, 960)); } catch { }
+#else
+        SystemBackdrop = new MicaBackdrop();
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(AppTitleBar);
-        AppWindow.SetIcon(Path.Combine(AppContext.BaseDirectory, "Assets", "TahaCull.ico"));
+        AppWindow.SetIcon(Path.Combine(AppContext.BaseDirectory, "Assets", "PickMatch.ico"));
         AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
 
         double scale = GetDpiForWindow(WinRT.Interop.WindowNative.GetWindowHandle(this)) / 96.0;
@@ -51,11 +57,13 @@ public sealed partial class MainWindow : Window
         var area = DisplayArea.GetFromWindowId(AppWindow.Id, DisplayAreaFallback.Primary).WorkArea;
         int w = Math.Min((int)(1440 * scale), area.Width), h = Math.Min((int)(960 * scale), area.Height);
         AppWindow.MoveAndResize(new RectInt32(area.X + (area.Width - w) / 2, area.Y + (area.Height - h) / 2, w, h));
+#endif
+        Root.AddHandler(UIElement.KeyDownEvent, new KeyEventHandler(Root_KeyDown), handledEventsToo: true);
 
         PairList.ItemsSource = _visible;
         LoadSettings();
 
-        // TahaCull.exe <photos folder> <client folder> starts matching right away.
+        // PickMatch.exe <photos folder> <client folder> starts matching right away.
         var args = Environment.GetCommandLineArgs().Skip(1).Where(Directory.Exists).ToList();
         if (args.Count >= 2)
         {
@@ -66,8 +74,10 @@ public sealed partial class MainWindow : Window
         Closed += (_, _) => { _cts?.Cancel(); SaveSettings(); };
     }
 
+#if !HAS_UNO
     [DllImport("user32.dll")]
     static extern uint GetDpiForWindow(IntPtr hwnd);
+#endif
 
     // ---------- settings ----------
 
@@ -102,11 +112,40 @@ public sealed partial class MainWindow : Window
 
     async Task<string?> PickFolderAsync()
     {
-        var picker = new Windows.Storage.Pickers.FolderPicker { SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.PicturesLibrary };
-        picker.FileTypeFilter.Add("*");
-        WinRT.Interop.InitializeWithWindow.Initialize(picker, WinRT.Interop.WindowNative.GetWindowHandle(this));
-        var folder = await picker.PickSingleFolderAsync();
-        return folder?.Path;
+        try
+        {
+            var picker = new Windows.Storage.Pickers.FolderPicker { SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.PicturesLibrary };
+            picker.FileTypeFilter.Add("*");
+#if !HAS_UNO
+            WinRT.Interop.InitializeWithWindow.Initialize(picker, WinRT.Interop.WindowNative.GetWindowHandle(this));
+#endif
+            var folder = await picker.PickSingleFolderAsync();
+            return folder?.Path;
+        }
+        catch
+        {
+            return await TypeFolderAsync(); // no system folder dialog available (some Linux desktops)
+        }
+    }
+
+    async Task<string?> TypeFolderAsync()
+    {
+        var box = new TextBox { PlaceholderText = "/home/me/Pictures/Shoot", MinWidth = 420 };
+        var dlg = new ContentDialog
+        {
+            XamlRoot = Content.XamlRoot,
+            Title = "Folder path",
+            Content = box,
+            PrimaryButtonText = "OK",
+            CloseButtonText = "Cancel",
+            DefaultButton = ContentDialogButton.Primary,
+        };
+        if (await dlg.ShowAsync() != ContentDialogResult.Primary) return null;
+        var path = box.Text.Trim().Trim('"');
+        if (path.StartsWith('~')) path = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + path[1..];
+        if (Directory.Exists(path)) return path;
+        ShowInfo(InfoBarSeverity.Warning, "Folder not found", path);
+        return null;
     }
 
     async void PickPhotos_Click(object sender, RoutedEventArgs e)
@@ -276,7 +315,7 @@ public sealed partial class MainWindow : Window
         item.PropertyChanged += Item_PropertyChanged;
 
         string path = r.ClientPath;
-        item.ClientThumb = await ToImageAsync(await Task.Run(() => Imaging.DecodeAsync(path, new PhotoInfo { WholeFileIsImage = true }, ThumbSize)));
+        item.ClientThumb = ToImage(await Task.Run(() => Imaging.DecodeAsync(path, new PhotoInfo { WholeFileIsImage = true }, ThumbSize)));
         foreach (var c in item.Candidates) await LoadThumbAsync(c, c == item.Selected ? ThumbSize : SmallThumbSize);
         return item;
     }
@@ -288,15 +327,17 @@ public sealed partial class MainWindow : Window
         var bmp = await Task.Run(() => Imaging.DecodeAsync(pf.Path, pf.Info, size));
         if (bmp == null) return;
         c.ThumbSize = size;
-        c.Thumb = await ToImageAsync(bmp);
+        c.Thumb = ToImage(bmp);
     }
 
-    static async Task<ImageSource?> ToImageAsync(SoftwareBitmap? bmp)
+    /// <summary>Show decoded pixels (premultiplied BGRA). Must run on the UI thread.</summary>
+    static ImageSource? ToImage(Bitmap32? bmp)
     {
         if (bmp == null) return null;
-        var src = new SoftwareBitmapSource();
-        await src.SetBitmapAsync(bmp);
-        return src;
+        var wb = new WriteableBitmap(bmp.Width, bmp.Height);
+        using (var s = wb.PixelBuffer.AsStream()) s.Write(bmp.Bgra, 0, bmp.Bgra.Length);
+        wb.Invalidate();
+        return wb;
     }
 
     void Item_PropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -463,7 +504,7 @@ public sealed partial class MainWindow : Window
             if (report.Problems.Count > 0) msg += " Problems: " + string.Join("; ", report.Problems.Take(5));
 
             var open = new Button { Content = "Open folder" };
-            open.Click += (_, _) => Process.Start(new ProcessStartInfo("explorer.exe", $"\"{outDir}\"") { UseShellExecute = true });
+            open.Click += (_, _) => OpenFolder(outDir);
             ShowInfo(report.Problems.Count == 0 ? InfoBarSeverity.Success : InfoBarSeverity.Warning, "Done", msg, open);
         }
         catch (Exception ex)
@@ -474,6 +515,16 @@ public sealed partial class MainWindow : Window
         {
             SetBusy(false);
         }
+    }
+
+    static void OpenFolder(string dir)
+    {
+        try
+        {
+            if (OperatingSystem.IsWindows()) Process.Start(new ProcessStartInfo("explorer.exe", $"\"{dir}\"") { UseShellExecute = true });
+            else Process.Start(new ProcessStartInfo(OperatingSystem.IsMacOS() ? "open" : "xdg-open", $"\"{dir}\"") { UseShellExecute = false });
+        }
+        catch { }
     }
 
     // ---------- large compare ----------
@@ -499,25 +550,25 @@ public sealed partial class MainWindow : Window
         CompareConfirm.IsChecked = p.Confirmed;
         CompareClient.Source = p.ClientThumb;
         CompareOriginal.Source = p.SelectedThumb;
-        CompareRing.IsActive = true;
+        CompareRing.Visibility = Visibility.Visible;
         Root.Focus(FocusState.Programmatic);
 
         try
         {
             string client = p.ClientPath;
-            var big1 = await ToImageAsync(await Task.Run(() => Imaging.DecodeAsync(client, new PhotoInfo { WholeFileIsImage = true }, LargeSize)));
+            var big1 = ToImage(await Task.Run(() => Imaging.DecodeAsync(client, new PhotoInfo { WholeFileIsImage = true }, LargeSize)));
             if (_compareItem != p) return;
             if (big1 != null) CompareClient.Source = big1;
             if (p.Selected?.Source.PreviewFile is { } pf)
             {
-                var big2 = await ToImageAsync(await Task.Run(() => Imaging.DecodeAsync(pf.Path, pf.Info, LargeSize, best: true)));
+                var big2 = ToImage(await Task.Run(() => Imaging.DecodeAsync(pf.Path, pf.Info, LargeSize, best: true)));
                 if (_compareItem != p) return;
                 if (big2 != null) CompareOriginal.Source = big2;
             }
         }
         finally
         {
-            if (_compareItem == p) CompareRing.IsActive = false;
+            if (_compareItem == p) CompareRing.Visibility = Visibility.Collapsed;
         }
     }
 
@@ -546,7 +597,7 @@ public sealed partial class MainWindow : Window
         if (_compareItem != null) _compareItem.Confirmed = CompareConfirm.IsChecked == true;
     }
 
-    void Root_PreviewKeyDown(object sender, KeyRoutedEventArgs e)
+    void Root_KeyDown(object sender, KeyRoutedEventArgs e)
     {
         if (CompareOverlay.Visibility != Visibility.Visible) return;
         switch (e.Key)

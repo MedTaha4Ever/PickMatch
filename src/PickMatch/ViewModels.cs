@@ -3,9 +3,9 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
-using TahaCull.Core;
+using PickMatch.Core;
 
-namespace TahaCull;
+namespace PickMatch;
 
 public abstract class Observable : INotifyPropertyChanged
 {

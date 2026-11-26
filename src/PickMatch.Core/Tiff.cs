@@ -1,7 +1,7 @@
 using System.Buffers.Binary;
 using System.Text;
 
-namespace TahaCull.Core;
+namespace PickMatch.Core;
 
 /// <summary>
 /// Minimal TIFF/EXIF reader. Most RAW formats (CR2, NEF, ARW, DNG, RW2, PEF, SRW, ORF…) are TIFF files,

@@ -1,6 +1,6 @@
 using Microsoft.UI.Xaml;
 
-namespace TahaCull;
+namespace PickMatch;
 
 public partial class App : Application
 {

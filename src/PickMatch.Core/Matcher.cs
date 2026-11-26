@@ -1,4 +1,4 @@
-namespace TahaCull.Core;
+namespace PickMatch.Core;
 
 /// <summary>Small grayscale image used for matching.</summary>
 public sealed class Gray

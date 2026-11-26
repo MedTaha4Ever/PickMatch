@@ -1,0 +1,7 @@
+<Project>
+  <PropertyGroup>
+    <!-- Same SkiaSharp as the Uno Platform version in global.json uses, for the Linux/macOS code path. -->
+    <SkiaSharpVersion>3.119.1</SkiaSharpVersion>
+    <Version>2.1.0</Version>
+  </PropertyGroup>
+</Project>

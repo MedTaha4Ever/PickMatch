@@ -1,0 +1,42 @@
+<Project Sdk="Uno.Sdk">
+
+  <!--
+    PickMatch for Linux and macOS (also runs on Windows), built with Uno Platform.
+    It shares the screens and code of the Windows app in ..\PickMatch; Windows-only parts
+    (Mica, custom title bar) are left out with #if HAS_UNO.
+  -->
+  <PropertyGroup>
+    <TargetFrameworks>net10.0-desktop</TargetFrameworks>
+    <OutputType>Exe</OutputType>
+    <UnoSingleProject>true</UnoSingleProject>
+    <RootNamespace>PickMatch</RootNamespace>
+    <AssemblyName>PickMatch</AssemblyName>
+    <ApplicationTitle>PickMatch</ApplicationTitle>
+    <ApplicationId>io.github.medtaha4ever.pickmatch</ApplicationId>
+    <ApplicationDisplayVersion>$(Version)</ApplicationDisplayVersion>
+    <ApplicationVersion>3</ApplicationVersion>
+    <ApplicationPublisher>PickMatch</ApplicationPublisher>
+    <Description>Match client-picked photos to the original RAW/JPG files</Description>
+    <UnoFeatures>Skia;</UnoFeatures>
+    <NoWarn>$(NoWarn);NU1507;NETSDK1201;PRI257</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ApplicationDefinition Include="..\PickMatch\App.xaml" Link="App.xaml" />
+    <Compile Include="..\PickMatch\App.xaml.cs" Link="App.xaml.cs" DependentUpon="App.xaml" />
+    <Page Include="..\PickMatch\MainWindow.xaml" Link="MainWindow.xaml" />
+    <Compile Include="..\PickMatch\MainWindow.xaml.cs" Link="MainWindow.xaml.cs" DependentUpon="MainWindow.xaml" />
+    <Compile Include="..\PickMatch\ViewModels.cs" Link="ViewModels.cs" />
+    <Content Include="..\PickMatch\Assets\**" Link="Assets\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.WinUI.Controls.SettingsControls" Version="8.2.251219" />
+    <PackageReference Include="CommunityToolkit.WinUI.Controls.Segmented" Version="8.2.251219" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PickMatch.Core\PickMatch.Core.csproj" />
+  </ItemGroup>
+
+</Project>
