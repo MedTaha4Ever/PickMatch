@@ -162,7 +162,7 @@ public sealed partial class MainWindow : Window
     {
         _clientDir = f;
         int n = MatchEngine.ClientPictures(f).Count();
-        ClientCard.Description = $"{f}  ·  {n} picture{(n == 1 ? "" : "s")}";
+        ClientDesc.Text = $"{f}  ·  {n} picture{(n == 1 ? "" : "s")}";
         SetOut(Path.Combine(f, "Originals"));
         UpdateButtons();
     }
@@ -175,7 +175,7 @@ public sealed partial class MainWindow : Window
     void SetPhotos(string f)
     {
         _photosDir = f;
-        PhotosCard.Description = f;
+        PhotosDesc.Text = f;
         UpdateButtons();
     }
 
@@ -360,14 +360,16 @@ public sealed partial class MainWindow : Window
 
     // ---------- filter & size ----------
 
-    bool PassesFilter(PairItem p) => Filter.SelectedIndex switch
+    int FilterIndex => Filter.SelectedItem == null ? 0 : Filter.Items.IndexOf(Filter.SelectedItem);
+
+    bool PassesFilter(PairItem p) => FilterIndex switch
     {
         1 => !p.Confirmed || p.NeedsCheck,
         2 => p.Confirmed,
         _ => true
     };
 
-    void Filter_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    void Filter_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs e)
     {
         if (PairList == null) return;
         _visible.Clear();
