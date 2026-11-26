@@ -3,3 +3,5 @@ obj/
 publish/
 .vs/
 *.user
+build.log
+shot*.png

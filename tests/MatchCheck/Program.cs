@@ -1,6 +1,7 @@
 // Command-line check of the matching, without the app:
 //   MatchCheck <photosFolder> <clientFolder> [expected.tsv] [excludeFolder]...   expected.tsv: clientFileName<TAB>photoName
 //   MatchCheck --info <file>...                                    show what is read from photo files
+//   set TAHACULL_COPY_TO=<folder> to also copy the auto-confirmed picks there (RAW + JPG + sidecars, no renaming)
 using System.Diagnostics;
 using TahaCull.Core;
 
@@ -24,6 +25,7 @@ foreach (var g in lib.Photos.GroupBy(p => p.Kinds).OrderByDescending(g => g.Coun
 var engine = new MatchEngine(lib);
 var expected = args.Length > 2 ? File.ReadAllLines(args[2]).Select(l => l.Split('\t')).ToDictionary(p => p[0], p => p[1]) : new();
 int ok = 0, okAuto = 0, wrongAuto = 0, n = 0;
+var picks = new List<(string, SourcePhoto)>();
 foreach (var c in MatchEngine.ClientPictures(args[1]))
 {
     var t = Stopwatch.StartNew();
@@ -33,8 +35,16 @@ foreach (var c in MatchEngine.ClientPictures(args[1]))
     n++;
     bool right = r.Chosen?.Name == exp;
     if (right) ok++;
-    if (r.AutoConfirm) { if (right) okAuto++; else wrongAuto++; }
+    if (r.AutoConfirm) { if (right) okAuto++; else wrongAuto++; picks.Add((c, r.Chosen!)); }
     var alt = r.Candidates.Skip(1).FirstOrDefault();
     Console.WriteLine($"{fn,-14} exp={exp} got={r.Chosen?.Name}({r.Kind},{(r.Candidates.Count > 0 ? r.Candidates[0].score : 0):0.00}) auto={r.AutoConfirm} next={alt.src?.Name}:{alt.score:0.00} {(right ? "" : "  <-- WRONG")} {t.ElapsedMilliseconds}ms");
 }
 Console.WriteLine($"Correct {ok}/{n}; auto-confirmed right {okAuto}, auto-confirmed WRONG {wrongAuto}; total {sw.Elapsed.TotalSeconds:0.0}s");
+
+if (Environment.GetEnvironmentVariable("TAHACULL_COPY_TO") is { Length: > 0 } outDir)
+{
+    var rep = FileCopier.Copy(picks, outDir, new CopyOptions(true, true, true, false));
+    Console.WriteLine($"Copy: {rep.Copied} copied, {rep.AlreadyThere} already there, problems: {string.Join("; ", rep.Problems)}");
+    rep = FileCopier.Copy(picks, outDir, new CopyOptions(true, true, true, false));
+    Console.WriteLine($"Copy again: {rep.Copied} copied, {rep.AlreadyThere} already there");
+}
