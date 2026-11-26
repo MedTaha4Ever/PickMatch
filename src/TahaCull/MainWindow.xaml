@@ -98,6 +98,13 @@
                            Text="Find the originals of the client's picks" />
                 <TextBlock TextAlignment="Center" TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                            Text="Choose the photos folder and the client's pictures, then select Find originals. Check each pair, then copy the confirmed photos." />
+                <HyperlinkButton HorizontalAlignment="Center" Margin="0,24,0,0" NavigateUri="https://wise.com/pay/me/medb5"
+                                 ToolTipService.ToolTip="TahaCull is free and open source. Donations help keep it going.">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xEB51;" FontSize="14" />
+                        <TextBlock Text="Support TahaCull" />
+                    </StackPanel>
+                </HyperlinkButton>
             </StackPanel>
 
             <ListView x:Name="PairList" SelectionMode="None" Padding="24,0,24,16" Visibility="Collapsed">

@@ -1,5 +1,8 @@
 # TahaCull
 
+[![Donate with Wise](https://img.shields.io/badge/Donate-Wise-9FE870?logo=wise&logoColor=163300)](https://wise.com/pay/me/medb5)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 A Windows 11 app for after the client has chosen their photos. The client sends back the pictures they picked:
 WhatsApp copies, screenshots or low-res JPGs. TahaCull finds the original RAW/JPG for each one, you check the pairs
 side by side, and it copies the originals to a separate folder.
@@ -56,3 +59,11 @@ dotnet run --project tests/MatchCheck -c Release -- --info D:\Shoot\IMG_0001.CR2
 ```
 
 GitHub Actions builds x64 and ARM64 zips on every push. A `v*` tag also publishes them as a release.
+
+## Support
+
+TahaCull is free. If it saves you time, you can [buy me a coffee through Wise](https://wise.com/pay/me/medb5).
+
+## License
+
+[MIT](LICENSE): free to use, change, share and fork, including for commercial work.
