@@ -266,7 +266,7 @@ public sealed partial class MainWindow : Window
                 $"Matched {_all.Count} picture{(_all.Count == 1 ? "" : "s")} in {sw.Elapsed.TotalSeconds:0} s",
                 toCheck == 0 ? "All were found by name and look right. Review them, then copy."
                              : $"{toCheck} need a look. Use the To check filter, or double-click a pair to compare it large."
-                             + (_engine.Names.OcrAvailable ? "" : " (Windows text recognition isn't available, so names on pictures can't be read.)"));
+                             + (_engine.Names.OcrAvailable ? "" : OcrMissingHint));
         }
         catch (OperationCanceledException)
         {
@@ -282,6 +282,17 @@ public sealed partial class MainWindow : Window
             UpdateSummary();
         }
     }
+
+    static string OcrMissingHint =>
+        OperatingSystem.IsWindows() && !OperatingSystem.IsWindowsVersionAtLeast(10)
+            ? ""
+#if HAS_UNO
+            : OperatingSystem.IsMacOS()
+                ? " Tip: install Tesseract (brew install tesseract) so file names written on pictures can be read too."
+                : " Tip: install Tesseract (e.g. sudo apt install tesseract-ocr) so file names written on pictures can be read too.";
+#else
+            : " (Windows text recognition isn't available, so names written on pictures can't be read.)";
+#endif
 
     void Cancel_Click(object sender, RoutedEventArgs e) => _cts?.Cancel();
 

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=PickMatch
+Comment=Match client-picked photos to the original RAW/JPG files
+Exec=PickMatch %F
+Icon=pickmatch
+Categories=Graphics;Photography;
+Terminal=false
