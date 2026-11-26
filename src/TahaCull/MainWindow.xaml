@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="TahaCull.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:TahaCull"
+    xmlns:tk="using:CommunityToolkit.WinUI.Controls"
+    Title="TahaCull">
+
+    <Window.SystemBackdrop>
+        <MicaBackdrop />
+    </Window.SystemBackdrop>
+
+    <Grid x:Name="Root" PreviewKeyDown="Root_PreviewKeyDown">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="48" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Title bar -->
+        <Grid x:Name="AppTitleBar" Padding="16,0,140,0">
+            <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                <Image Source="Assets/TitleIcon.png" Width="16" Height="16" />
+                <TextBlock Text="TahaCull" Style="{StaticResource CaptionTextBlockStyle}" />
+                <TextBlock Text="Client picks to originals" Style="{StaticResource CaptionTextBlockStyle}"
+                           Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+            </StackPanel>
+        </Grid>
+
+        <!-- Setup -->
+        <StackPanel Grid.Row="1" Padding="24,4,24,8" Spacing="4" MaxWidth="1400">
+            <tk:SettingsCard x:Name="PhotosCard" Header="Photos" Description="The shoot folder with the RAW and JPG files. Subfolders are included.">
+                <tk:SettingsCard.HeaderIcon>
+                    <FontIcon Glyph="&#xEB9F;" />
+                </tk:SettingsCard.HeaderIcon>
+                <Button Content="Choose folder" Click="PickPhotos_Click" />
+            </tk:SettingsCard>
+            <tk:SettingsCard x:Name="ClientCard" Header="Client picks" Description="The folder with the pictures the client sent (WhatsApp, screenshots, JPGs…).">
+                <tk:SettingsCard.HeaderIcon>
+                    <FontIcon Glyph="&#xE8B9;" />
+                </tk:SettingsCard.HeaderIcon>
+                <Button Content="Choose folder" Click="PickClient_Click" />
+            </tk:SettingsCard>
+
+            <Grid Margin="0,8,0,0" ColumnSpacing="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Button x:Name="MatchButton" Style="{StaticResource AccentButtonStyle}" Click="Match_Click" IsEnabled="False">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE721;" FontSize="14" />
+                        <TextBlock Text="Find originals" />
+                    </StackPanel>
+                </Button>
+                <Button x:Name="CancelButton" Grid.Column="1" Content="Stop" Click="Cancel_Click" Visibility="Collapsed" />
+                <StackPanel Grid.Column="2" VerticalAlignment="Center" Spacing="4">
+                    <TextBlock x:Name="ProgressText" Style="{StaticResource CaptionTextBlockStyle}"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    <ProgressBar x:Name="Progress" Visibility="Collapsed" />
+                </StackPanel>
+            </Grid>
+
+            <InfoBar x:Name="Info" IsOpen="False" Margin="0,8,0,0" />
+        </StackPanel>
+
+        <!-- List toolbar -->
+        <Grid x:Name="ListToolbar" Grid.Row="2" Padding="24,4,24,8" ColumnSpacing="16" Visibility="Collapsed" MaxWidth="1400">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <tk:Segmented x:Name="Filter" SelectedIndex="0" SelectionChanged="Filter_SelectionChanged">
+                <tk:SegmentedItem Content="All" />
+                <tk:SegmentedItem Content="To check" />
+                <tk:SegmentedItem Content="Confirmed" />
+            </tk:Segmented>
+            <TextBlock x:Name="SummaryText" Grid.Column="1" VerticalAlignment="Center"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                <FontIcon Glyph="&#xE71F;" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <Slider x:Name="SizeSlider" Width="160" Minimum="160" Maximum="560" StepFrequency="20" Value="280"
+                        ValueChanged="SizeSlider_ValueChanged" ToolTipService.ToolTip="Preview size" />
+                <FontIcon Glyph="&#xE71E;" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            </StackPanel>
+        </Grid>
+
+        <!-- Pairs -->
+        <Grid Grid.Row="3">
+            <StackPanel x:Name="EmptyState" VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="12" MaxWidth="440">
+                <FontIcon Glyph="&#xE91B;" FontSize="48" Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+                <TextBlock TextAlignment="Center" TextWrapping="Wrap" Style="{StaticResource BodyStrongTextBlockStyle}"
+                           Text="Find the originals of the client's picks" />
+                <TextBlock TextAlignment="Center" TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                           Text="Choose the photos folder and the client's pictures, then select Find originals. Check each pair, then copy the confirmed photos." />
+            </StackPanel>
+
+            <ListView x:Name="PairList" SelectionMode="None" Padding="24,0,24,16" Visibility="Collapsed">
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="ListViewItem" BasedOn="{StaticResource DefaultListViewItemStyle}">
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                        <Setter Property="Padding" Value="0" />
+                        <Setter Property="Margin" Value="0,4" />
+                    </Style>
+                </ListView.ItemContainerStyle>
+                <ListView.ItemTemplate>
+                    <DataTemplate x:DataType="local:PairItem">
+                        <Grid Padding="16" ColumnSpacing="16" CornerRadius="8" MaxWidth="1352"
+                              Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                              BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="Client" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                <Border CornerRadius="4" Background="{ThemeResource ControlFillColorSecondaryBrush}" MinWidth="120">
+                                    <Image Source="{x:Bind ClientThumb, Mode=OneWay}" Height="{x:Bind ThumbHeight, Mode=OneWay}"
+                                           Stretch="Uniform" DoubleTapped="Thumb_DoubleTapped" />
+                                </Border>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1" Spacing="6">
+                                <TextBlock Text="Original" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                <Border CornerRadius="4" Background="{ThemeResource ControlFillColorSecondaryBrush}" MinWidth="120">
+                                    <Image Source="{x:Bind SelectedThumb, Mode=OneWay}" Height="{x:Bind ThumbHeight, Mode=OneWay}"
+                                           Stretch="Uniform" DoubleTapped="Thumb_DoubleTapped" />
+                                </Border>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2" Spacing="8">
+                                <TextBlock Text="{x:Bind ClientName, Mode=OneWay}" Style="{StaticResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextTrimming="CharacterEllipsis" />
+                                <TextBlock Text="{x:Bind SelectedName, Mode=OneWay}" Style="{StaticResource SubtitleTextBlockStyle}" IsTextSelectionEnabled="True" />
+                                <TextBlock Text="{x:Bind SelectedDetails, Mode=OneWay}" Style="{StaticResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <FontIcon Glyph="{x:Bind StatusGlyph, Mode=OneWay}" Foreground="{x:Bind StatusBrush, Mode=OneWay}" FontSize="16" />
+                                    <TextBlock Text="{x:Bind StatusText, Mode=OneWay}" TextWrapping="Wrap" MaxWidth="460" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Spacing="12">
+                                    <CheckBox Content="Confirmed" IsChecked="{x:Bind ConfirmedBox, Mode=TwoWay}" />
+                                    <HyperlinkButton Content="Compare large" Click="Compare_Click" />
+                                </StackPanel>
+
+                                <TextBlock Text="Close matches" Style="{StaticResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="0,4,0,0" />
+                                <ScrollViewer HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto" VerticalScrollMode="Disabled" VerticalScrollBarVisibility="Disabled">
+                                    <ItemsRepeater ItemsSource="{x:Bind Candidates}">
+                                        <ItemsRepeater.Layout>
+                                            <StackLayout Orientation="Horizontal" Spacing="8" />
+                                        </ItemsRepeater.Layout>
+                                        <ItemsRepeater.ItemTemplate>
+                                            <DataTemplate x:DataType="local:Candidate">
+                                                <Button Click="Candidate_Click" Padding="4" Background="Transparent"
+                                                        BorderThickness="2" BorderBrush="{x:Bind Border, Mode=OneWay}"
+                                                        ToolTipService.ToolTip="{x:Bind Tooltip}">
+                                                    <StackPanel Spacing="2">
+                                                        <Image Source="{x:Bind Thumb, Mode=OneWay}" Height="72" MinWidth="72" Stretch="Uniform" />
+                                                        <TextBlock Text="{x:Bind Name}" Style="{StaticResource CaptionTextBlockStyle}" HorizontalAlignment="Center" />
+                                                        <TextBlock Text="{x:Bind ScoreText}" FontSize="11" HorizontalAlignment="Center"
+                                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                                    </StackPanel>
+                                                </Button>
+                                            </DataTemplate>
+                                        </ItemsRepeater.ItemTemplate>
+                                    </ItemsRepeater>
+                                </ScrollViewer>
+
+                                <AutoSuggestBox PlaceholderText="Not here? Type the file name" Width="260" HorizontalAlignment="Left"
+                                                QueryIcon="Find" TextChanged="Name_TextChanged" QuerySubmitted="Name_QuerySubmitted" />
+                            </StackPanel>
+                        </Grid>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+        </Grid>
+
+        <!-- Footer -->
+        <Grid x:Name="Footer" Grid.Row="4" Padding="24,12" ColumnSpacing="12" Visibility="Collapsed"
+              Background="{ThemeResource LayerFillColorDefaultBrush}"
+              BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="0,1,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Button Content="Confirm all" Click="ConfirmAll_Click" />
+            <Button Grid.Column="1" Content="Clear all" Click="ClearAll_Click" />
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" HorizontalAlignment="Right">
+                <FontIcon Glyph="&#xE8B7;" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <TextBlock x:Name="OutText" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="520"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <HyperlinkButton Content="Change" Click="PickOut_Click" />
+            </StackPanel>
+            <DropDownButton Grid.Column="3" Content="Options">
+                <DropDownButton.Flyout>
+                    <MenuFlyout Placement="TopEdgeAlignedRight">
+                        <ToggleMenuFlyoutItem x:Name="RawOption" Text="Copy RAW files" IsChecked="True" Click="Option_Click" />
+                        <ToggleMenuFlyoutItem x:Name="JpgOption" Text="Copy JPG files" Click="Option_Click" />
+                        <ToggleMenuFlyoutItem x:Name="SidecarOption" Text="Copy edits (.xmp and other sidecars)" IsChecked="True" Click="Option_Click" />
+                        <MenuFlyoutSeparator />
+                        <ToggleMenuFlyoutItem x:Name="RenameOption" Text="Rename client pictures to the original names" IsChecked="True" Click="Option_Click" />
+                    </MenuFlyout>
+                </DropDownButton.Flyout>
+            </DropDownButton>
+            <Button x:Name="CopyButton" Grid.Column="4" Style="{StaticResource AccentButtonStyle}" Click="Copy_Click" IsEnabled="False">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <FontIcon Glyph="&#xE8C8;" FontSize="14" />
+                    <TextBlock x:Name="CopyText" Text="Copy photos" />
+                </StackPanel>
+            </Button>
+        </Grid>
+
+        <!-- Large compare view -->
+        <Grid x:Name="CompareOverlay" Grid.Row="1" Grid.RowSpan="4" Visibility="Collapsed"
+              Background="{ThemeResource SolidBackgroundFillColorBaseBrush}" Padding="24,8,24,16" RowSpacing="12">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <Grid ColumnSpacing="8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                    <TextBlock x:Name="CompareTitle" Style="{StaticResource SubtitleTextBlockStyle}" />
+                    <TextBlock x:Name="CompareStatus" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                </StackPanel>
+                <Button Grid.Column="1" Click="ComparePrev_Click" ToolTipService.ToolTip="Previous (Left arrow)">
+                    <FontIcon Glyph="&#xE76B;" FontSize="14" />
+                </Button>
+                <Button Grid.Column="2" Click="CompareNext_Click" ToolTipService.ToolTip="Next (Right arrow)">
+                    <FontIcon Glyph="&#xE76C;" FontSize="14" />
+                </Button>
+                <Button Grid.Column="3" Click="CompareClose_Click" ToolTipService.ToolTip="Close (Esc)">
+                    <FontIcon Glyph="&#xE711;" FontSize="14" />
+                </Button>
+            </Grid>
+            <Grid Grid.Row="1" ColumnSpacing="16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Image x:Name="CompareClient" Stretch="Uniform" />
+                <Image x:Name="CompareOriginal" Grid.Column="1" Stretch="Uniform" />
+                <ProgressRing x:Name="CompareRing" Grid.ColumnSpan="2" IsActive="False" />
+            </Grid>
+            <Grid Grid.Row="2" ColumnSpacing="16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <TextBlock x:Name="CompareClientName" HorizontalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <CheckBox x:Name="CompareConfirm" Grid.Column="1" Content="Confirmed (Space)" Click="CompareConfirm_Click" />
+                <TextBlock x:Name="CompareOriginalName" Grid.Column="2" HorizontalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            </Grid>
+        </Grid>
+    </Grid>
+</Window>
