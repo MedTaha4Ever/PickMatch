@@ -284,14 +284,12 @@ public sealed partial class MainWindow : Window
     }
 
     static string OcrMissingHint =>
-        OperatingSystem.IsWindows() && !OperatingSystem.IsWindowsVersionAtLeast(10)
-            ? ""
 #if HAS_UNO
-            : OperatingSystem.IsMacOS()
-                ? " Tip: install Tesseract (brew install tesseract) so file names written on pictures can be read too."
-                : " Tip: install Tesseract (e.g. sudo apt install tesseract-ocr) so file names written on pictures can be read too.";
+        OperatingSystem.IsMacOS() ? " Tip: install Tesseract (brew install tesseract) so file names written on pictures can be read too."
+        : OperatingSystem.IsLinux() ? " Tip: install Tesseract (e.g. sudo apt install tesseract-ocr) so file names written on pictures can be read too."
+        : " Tip: install Tesseract OCR so file names written on pictures can be read too.";
 #else
-            : " (Windows text recognition isn't available, so names written on pictures can't be read.)";
+        " (Windows text recognition isn't available, so file names written on pictures can't be read.)";
 #endif
 
     void Cancel_Click(object sender, RoutedEventArgs e) => _cts?.Cancel();
