@@ -1,5 +1,5 @@
 // Command-line check of the matching, without the app:
-//   MatchCheck <photosFolder> <clientFolder> [expected.tsv]      expected.tsv: clientFileName<TAB>photoName
+//   MatchCheck <photosFolder> <clientFolder> [expected.tsv] [excludeFolder]...   expected.tsv: clientFileName<TAB>photoName
 //   MatchCheck --info <file>...                                    show what is read from photo files
 using System.Diagnostics;
 using TahaCull.Core;
@@ -17,7 +17,7 @@ if (args.Length > 0 && args[0] == "--info")
 }
 
 var sw = Stopwatch.StartNew();
-var lib = await Library.LoadAsync(args[0], [args[1]], null, default);
+var lib = await Library.LoadAsync(args[0], args.Skip(3).Prepend(args[1]), null, default);
 Console.WriteLine($"{lib.FileCount} files -> {lib.Photos.Count} shots ({lib.Photos.Count(p => p.Fine == null)} without preview) in {sw.Elapsed.TotalSeconds:0.0}s");
 foreach (var g in lib.Photos.GroupBy(p => p.Kinds).OrderByDescending(g => g.Count())) Console.WriteLine($"  {g.Count(),5} x {g.Key}");
 
