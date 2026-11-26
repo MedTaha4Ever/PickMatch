@@ -54,6 +54,15 @@ public sealed partial class MainWindow : Window
 
         PairList.ItemsSource = _visible;
         LoadSettings();
+
+        // TahaCull.exe <photos folder> <client folder> starts matching right away.
+        var args = Environment.GetCommandLineArgs().Skip(1).Where(Directory.Exists).ToList();
+        if (args.Count >= 2)
+        {
+            SetPhotos(args[0]);
+            SetClient(args[1]);
+            DispatcherQueue.TryEnqueue(() => Match_Click(this, new RoutedEventArgs()));
+        }
         Closed += (_, _) => { _cts?.Cancel(); SaveSettings(); };
     }
 
@@ -107,7 +116,11 @@ public sealed partial class MainWindow : Window
 
     async void PickClient_Click(object sender, RoutedEventArgs e)
     {
-        if (await PickFolderAsync() is not { } f) return;
+        if (await PickFolderAsync() is { } f) SetClient(f);
+    }
+
+    void SetClient(string f)
+    {
         _clientDir = f;
         int n = MatchEngine.ClientPictures(f).Count();
         ClientCard.Description = $"{f}  ·  {n} picture{(n == 1 ? "" : "s")}";
