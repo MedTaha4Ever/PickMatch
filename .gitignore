@@ -5,3 +5,4 @@ publish/
 *.user
 build.log
 shot*.png
+AppPackages/

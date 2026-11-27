@@ -77,6 +77,32 @@ jobs:
         with:
           files: dist/*
 
+  store:
+    needs: test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Microsoft Store packages (MSIX, x64 + ARM64)
+        run: |
+          $v = ([xml](Get-Content Directory.Build.props)).Project.PropertyGroup.Version
+          $m = "src/PickMatch/Package.appxmanifest"
+          (Get-Content $m -Raw) -replace '(<Identity[^>]*?Version=")[^"]+(")', "`${1}$v.0`${2}" | Set-Content $m -NoNewline
+          Select-String 'Version=' $m
+          foreach ($a in 'x64', 'ARM64') {
+            dotnet build src/PickMatch/PickMatch.csproj -c Release -p:StoreBuild=true -p:Platform=$a
+            if ($LASTEXITCODE -ne 0) { throw "Store build failed for $a" }
+          }
+          New-Item dist -ItemType Directory -Force | Out-Null
+          Copy-Item src/PickMatch/AppPackages/*.msixupload dist/
+          Get-ChildItem dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PickMatch-store-packages
+          path: dist/*.msixupload
+
   linux:
     needs: test
     runs-on: ubuntu-latest
