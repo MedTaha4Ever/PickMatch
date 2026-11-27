@@ -34,7 +34,7 @@ Section: graphics
 Priority: optional
 Architecture: $DEBARCH
 Installed-Size: $SIZE
-Depends: libx11-6, libfontconfig1, libfreetype6, libicu76 | libicu74 | libicu72 | libicu71 | libicu70 | libicu67
+Depends: libx11-6, libfontconfig1, libfreetype6
 Recommends: tesseract-ocr
 Maintainer: PickMatch <MedTaha4Ever@users.noreply.github.com>
 Homepage: https://github.com/MedTaha4Ever/PickMatch

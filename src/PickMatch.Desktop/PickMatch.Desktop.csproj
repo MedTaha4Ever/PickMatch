@@ -21,6 +21,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <NoWarn>$(NoWarn);NU1507;NETSDK1201;PRI257</NoWarn>
+    <!-- Linux: no dependency on the system ICU library (its package name changes with every distro release). -->
+    <InvariantGlobalization Condition="$(RuntimeIdentifier.StartsWith('linux'))">true</InvariantGlobalization>
   </PropertyGroup>
 
   <ItemGroup>
