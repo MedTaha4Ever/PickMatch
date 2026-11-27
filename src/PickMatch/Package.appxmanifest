@@ -14,7 +14,7 @@
   <Identity
     Name="TahaforMultimediaProducti.PickMatch"
     Publisher="CN=51631B2E-D7DA-4501-916E-DEBC0DC16EA7"
-    Version="3.1.0.0" />
+    Version="3.1.1.0" />
 
   <Properties>
     <DisplayName>PickMatch</DisplayName>
