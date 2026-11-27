@@ -14,16 +14,24 @@ Runs on **Windows**, **macOS** and **Linux**.
 
 Get the latest version from [Releases](https://github.com/MedTaha4Ever/PickMatch/releases/latest):
 
-| System | File | How to start |
+| System | Installer | Or without installing |
 |---|---|---|
-| Windows 10/11 | `PickMatch-windows-x64.zip` (ARM: `-arm64`) | Unzip, run `PickMatch.exe` |
-| macOS (Apple Silicon) | `PickMatch-macos-arm64.zip` (Intel: `-x64`) | Unzip, then **right-click PickMatch → Open** the first time (see below) |
-| Linux | `PickMatch-linux-x64.tar.gz` (ARM: `-arm64`) | `tar xzf PickMatch-linux-x64.tar.gz && ./PickMatch/PickMatch` |
+| Windows 10/11 | **`PickMatch-setup-windows-x64.exe`** (ARM: `-arm64`) | `PickMatch-windows-x64.zip`: unzip, run `PickMatch.exe` |
+| macOS, Apple chip | **`PickMatch-macos-arm64.dmg`**: open it, drag PickMatch to Applications | `PickMatch-macos-arm64.zip` |
+| macOS, Intel | `PickMatch-macos-x64.dmg` | `PickMatch-macos-x64.zip` |
+| Ubuntu, Debian, Mint… | **`PickMatch-linux-x64.deb`** (ARM: `-arm64`): `sudo apt install ./PickMatch-linux-x64.deb` | `PickMatch-linux-x64.tar.gz`: extract, run `PickMatch/PickMatch` |
 
-**macOS:** PickMatch is not signed with a paid Apple developer certificate, so macOS asks for confirmation the
+**Windows:** the setup installs for your user only, so no admin rights are needed. It adds Start menu and (optional)
+desktop shortcuts, and you can uninstall it from *Settings → Apps*. The installer isn't code-signed yet, so
+SmartScreen may show "Windows protected your PC": click **More info → Run anyway**.
+
+**macOS:** PickMatch isn't signed with a paid Apple developer certificate, so macOS asks for confirmation the
 first time. Right-click the app and choose **Open**. On recent macOS versions, open it once, then go to
 **System Settings → Privacy & Security** and click **Open Anyway**. If macOS says the app is "damaged", run
-`xattr -dr com.apple.quarantine PickMatch.app` in Terminal.
+`xattr -dr com.apple.quarantine /Applications/PickMatch.app` in Terminal.
+
+**Linux:** the `.deb` adds PickMatch to your app menu and also installs Tesseract (for reading names written on
+pictures). Remove it with `sudo apt remove pickmatch`.
 
 ## Using it
 
@@ -84,7 +92,8 @@ dotnet run --project tests/MatchCheck -f net10.0 -- "D:\Shoot" "D:\client" expec
 dotnet run --project tests/MatchCheck -f net10.0 -- --info D:\Shoot\IMG_0001.CR2
 ```
 
-GitHub Actions runs the self-test on Windows, macOS and Linux, and builds all six downloads on every push.
+GitHub Actions runs the self-test on Windows, macOS and Linux, builds the apps and installers on every push, and
+tests each installer (install, start the app, uninstall). Installer sources are in `installer/`.
 A `v*` tag publishes them as a release.
 
 ## Support
