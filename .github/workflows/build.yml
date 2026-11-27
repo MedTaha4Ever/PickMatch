@@ -42,16 +42,40 @@ jobs:
       - name: Publish (WinUI)
         run: dotnet publish src/PickMatch/PickMatch.csproj -c Release -r win-${{ matrix.arch }} -p:Platform=${{ matrix.arch }} -o publish/PickMatch
       - name: Zip
-        run: Compress-Archive -Path publish/PickMatch -DestinationPath PickMatch-windows-${{ matrix.arch }}.zip
+        run: |
+          New-Item -ItemType Directory dist -Force | Out-Null
+          Compress-Archive -Path publish/PickMatch -DestinationPath dist/PickMatch-windows-${{ matrix.arch }}.zip
+      - name: Installer (Inno Setup)
+        run: |
+          choco install innosetup -y --no-progress | Out-Null
+          $v = ([xml](Get-Content Directory.Build.props)).Project.PropertyGroup.Version
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" /Q "/DMyAppVersion=$v" "/DMyArch=${{ matrix.arch }}" "/DSourceDir=$PWD\publish\PickMatch" installer\windows\PickMatch.iss
+          if ($LASTEXITCODE -ne 0) { throw "ISCC failed" }
+          Get-ChildItem dist
+      - name: Test installer (install, find files, uninstall)
+        if: matrix.arch == 'x64'
+        run: |
+          $p = Start-Process dist\PickMatch-setup-windows-x64.exe -ArgumentList '/VERYSILENT','/CURRENTUSER','/SUPPRESSMSGBOXES','/NORESTART','/TASKS=desktopicon' -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "setup exit code $($p.ExitCode)" }
+          $dir = "$env:LOCALAPPDATA\Programs\PickMatch"
+          if (!(Test-Path "$dir\PickMatch.exe")) { throw "PickMatch.exe not installed" }
+          if (!(Test-Path "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\PickMatch.lnk")) { throw "no Start menu shortcut" }
+          $app = Start-Process "$dir\PickMatch.exe" -PassThru
+          Start-Sleep 15
+          if ($app.HasExited) { Write-Warning "PickMatch exited with code $($app.ExitCode) (runner may have no desktop)" } else { "PickMatch is running"; Stop-Process $app.Id }
+          Start-Process "$dir\unins000.exe" -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES' -Wait
+          Start-Sleep 3
+          if (Test-Path "$dir\PickMatch.exe") { throw "uninstall left files" }
+          "Install / uninstall OK"
       - uses: actions/upload-artifact@v4
         with:
           name: PickMatch-windows-${{ matrix.arch }}
-          path: PickMatch-windows-${{ matrix.arch }}.zip
+          path: dist/*
       - name: Release (tags only)
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: PickMatch-windows-${{ matrix.arch }}.zip
+          files: dist/*
 
   linux:
     needs: test
@@ -66,20 +90,40 @@ jobs:
           dotnet-version: 10.0.x
       - name: Publish (Uno desktop)
         run: dotnet publish src/PickMatch.Desktop/PickMatch.Desktop.csproj -c Release -f net10.0-desktop -r linux-${{ matrix.arch }} --self-contained -o publish/PickMatch
-      - name: Archive
+      - name: Archive and .deb package
         run: |
+          VER=$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' Directory.Build.props)
+          mkdir -p dist
           cp packaging/linux/* publish/PickMatch/ 2>/dev/null || true
           chmod +x publish/PickMatch/PickMatch
-          tar -C publish -czf PickMatch-linux-${{ matrix.arch }}.tar.gz PickMatch
+          tar -C publish -czf dist/PickMatch-linux-${{ matrix.arch }}.tar.gz PickMatch
+          rm -f publish/PickMatch/pickmatch.desktop publish/PickMatch/pickmatch.png
+          installer/linux/build-deb.sh publish/PickMatch "$VER" ${{ matrix.arch }} dist
+          ls -la dist
+      - name: Test .deb (install, start, remove)
+        if: matrix.arch == 'x64'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ./dist/PickMatch-linux-x64.deb xvfb
+          test -x /usr/bin/pickmatch
+          test -f /usr/share/applications/pickmatch.desktop
+          set +e
+          timeout 20 xvfb-run -a pickmatch
+          code=$?
+          set -e
+          if [ $code -ne 124 ]; then echo "PickMatch stopped early (exit $code)"; exit 1; fi
+          echo "PickMatch was still running after 20 s"
+          sudo apt-get remove -y -qq pickmatch
+          test ! -e /usr/bin/pickmatch
       - uses: actions/upload-artifact@v4
         with:
           name: PickMatch-linux-${{ matrix.arch }}
-          path: PickMatch-linux-${{ matrix.arch }}.tar.gz
+          path: dist/*
       - name: Release (tags only)
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: PickMatch-linux-${{ matrix.arch }}.tar.gz
+          files: dist/*
 
   macos:
     needs: test
@@ -92,20 +136,36 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
-      - name: Publish (Uno desktop, .app bundle)
-        run: dotnet publish src/PickMatch.Desktop/PickMatch.Desktop.csproj -c Release -f net10.0-desktop -r osx-${{ matrix.arch }} --self-contained -p:PackageFormat=app -o publish
-      - name: Zip
+      - name: Publish (Uno desktop, .app + .dmg)
+        run: dotnet publish src/PickMatch.Desktop/PickMatch.Desktop.csproj -c Release -f net10.0-desktop -r osx-${{ matrix.arch }} --self-contained -p:PackageFormat=dmg -o publish
+      - name: Collect
         run: |
-          APP=$(find publish -maxdepth 2 -name "*.app" | head -1)
-          echo "App bundle: $APP"
-          test -n "$APP"
-          ditto -c -k --keepParent "$APP" PickMatch-macos-${{ matrix.arch }}.zip
+          find publish -maxdepth 3 \( -name "*.app" -o -name "*.dmg" \) -print
+          APP=$(find publish -maxdepth 3 -name "*.app" | head -1)
+          DMG=$(find publish -maxdepth 3 -name "*.dmg" | head -1)
+          test -n "$APP" && test -n "$DMG"
+          mkdir -p dist
+          ditto -c -k --keepParent "$APP" dist/PickMatch-macos-${{ matrix.arch }}.zip
+          cp "$DMG" dist/PickMatch-macos-${{ matrix.arch }}.dmg
+          ls -la dist
+      - name: Test .dmg (open, copy app, start)
+        if: matrix.arch == 'arm64'
+        run: |
+          hdiutil attach dist/PickMatch-macos-arm64.dmg -mountpoint /tmp/pm -nobrowse
+          ls /tmp/pm
+          cp -R /tmp/pm/*.app /tmp/
+          hdiutil detach /tmp/pm
+          APP=$(ls -d /tmp/*.app | head -1)
+          "$APP/Contents/MacOS/PickMatch" &
+          PID=$!
+          sleep 20
+          if kill -0 $PID 2>/dev/null; then echo "PickMatch was still running after 20 s"; kill $PID; else wait $PID; echo "PickMatch stopped early (exit $?)"; exit 1; fi
       - uses: actions/upload-artifact@v4
         with:
           name: PickMatch-macos-${{ matrix.arch }}
-          path: PickMatch-macos-${{ matrix.arch }}.zip
+          path: dist/*
       - name: Release (tags only)
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: PickMatch-macos-${{ matrix.arch }}.zip
+          files: dist/*
