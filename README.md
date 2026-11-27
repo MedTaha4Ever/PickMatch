@@ -96,6 +96,10 @@ GitHub Actions runs the self-test on Windows, macOS and Linux, builds the apps a
 tests each installer (install, start the app, uninstall). Installer sources are in `installer/`.
 A `v*` tag publishes them as a release.
 
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md). Every update gets an entry there, and the GitHub release notes are taken from it.
+
 ## Support
 
 PickMatch is free. If it saves you time, you can [buy me a coffee through Wise](https://wise.com/pay/me/medb5).

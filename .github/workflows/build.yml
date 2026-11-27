@@ -195,3 +195,26 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: dist/*
+
+  release-notes:
+    # On a version tag: use that version's section of CHANGELOG.md as the release notes.
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [windows, linux, macos, store]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Release notes from CHANGELOG.md
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VER="${GITHUB_REF_NAME#v}"
+          awk -v v="$VER" '
+            $0 ~ "^## \\[" v "\\]" { on=1; next }
+            on && /^## \[/ { exit }
+            on && /^\[[0-9]/ { exit }
+            on { print }
+          ' CHANGELOG.md > notes.md
+          if [ ! -s notes.md ]; then echo "No CHANGELOG.md section for $VER"; exit 1; fi
+          printf '\n---\n**Downloads:** Windows setup (`.exe`), macOS (`.dmg`), Linux (`.deb`), or the `.zip` / `.tar.gz` versions below. [Install notes](https://github.com/MedTaha4Ever/PickMatch#download)\n\nPickMatch is free and open source (MIT). If it saves you time, you can [support it through Wise](https://wise.com/pay/me/medb5) ❤\n' >> notes.md
+          cat notes.md
+          gh release edit "$GITHUB_REF_NAME" --title "PickMatch $VER" --notes-file notes.md
