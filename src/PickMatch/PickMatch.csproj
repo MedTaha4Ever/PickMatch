@@ -15,8 +15,6 @@
     <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == '' and '$(Platform)' == 'ARM64'">win-arm64</RuntimeIdentifier>
     <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">win-x64</RuntimeIdentifier>
     <UseWinUI>true</UseWinUI>
-    <WindowsPackageType>None</WindowsPackageType>
-    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
     <!-- Needed so "dotnet publish" also ships the compiled XAML (.xbf) and resources (.pri) of an unpackaged app. -->
     <EnableMsixTooling>true</EnableMsixTooling>
     <SelfContained>true</SelfContained>
@@ -24,6 +22,23 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Product>PickMatch</Product>
     <Description>Match client-picked photos to the original RAW/JPG files</Description>
+  </PropertyGroup>
+
+  <!-- Normal build, zip and setup.exe: unpackaged, everything included. -->
+  <PropertyGroup Condition="'$(StoreBuild)' != 'true'">
+    <WindowsPackageType>None</WindowsPackageType>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+  </PropertyGroup>
+
+  <!-- Microsoft Store: MSIX package. The Store signs it and installs the Windows App Runtime itself. -->
+  <PropertyGroup Condition="'$(StoreBuild)' == 'true'">
+    <WindowsPackageType>MSIX</WindowsPackageType>
+    <WindowsAppSDKSelfContained>false</WindowsAppSDKSelfContained>
+    <GenerateAppxPackageOnBuild>true</GenerateAppxPackageOnBuild>
+    <AppxPackageSigningEnabled>false</AppxPackageSigningEnabled>
+    <AppxBundle>Never</AppxBundle>
+    <UapAppxPackageBuildMode>StoreUpload</UapAppxPackageBuildMode>
+    <AppxSymbolPackageEnabled>false</AppxSymbolPackageEnabled>
   </PropertyGroup>
 
   <ItemGroup>

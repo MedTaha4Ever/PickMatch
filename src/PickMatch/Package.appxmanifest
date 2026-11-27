@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Microsoft Store package (MSIX). Used only when building with -p:StoreBuild=true;
+  the normal build and the setup.exe stay unpackaged.
+  Identity values come from Partner Center > PickMatch > Product identity.
+  The Version is set from Directory.Build.props when the package is built.
+-->
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  IgnorableNamespaces="uap rescap">
+
+  <Identity
+    Name="PickMatch.Placeholder"
+    Publisher="CN=00000000-0000-0000-0000-000000000000"
+    Version="3.1.0.0" />
+
+  <Properties>
+    <DisplayName>PickMatch</DisplayName>
+    <PublisherDisplayName>PickMatch</PublisherDisplayName>
+    <Logo>Assets\Store\StoreLogo.png</Logo>
+  </Properties>
+
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.17763.0" MaxVersionTested="10.0.26100.0" />
+  </Dependencies>
+
+  <Resources>
+    <Resource Language="x-generate" />
+  </Resources>
+
+  <Applications>
+    <Application Id="App" Executable="$targetnametoken$.exe" EntryPoint="$targetentrypoint$">
+      <uap:VisualElements
+        DisplayName="PickMatch"
+        Description="Find the original RAW/JPG of the photos your client picked"
+        BackgroundColor="transparent"
+        Square150x150Logo="Assets\Store\Square150x150Logo.png"
+        Square44x44Logo="Assets\Store\Square44x44Logo.png">
+        <uap:DefaultTile Wide310x150Logo="Assets\Store\Wide310x150Logo.png" ShortName="PickMatch" />
+        <uap:SplashScreen Image="Assets\Store\SplashScreen.png" />
+      </uap:VisualElements>
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust" />
+  </Capabilities>
+</Package>
