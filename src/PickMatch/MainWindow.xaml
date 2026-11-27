@@ -174,27 +174,36 @@
 
                                 <TextBlock Text="Close matches" Style="{StaticResource CaptionTextBlockStyle}"
                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="0,4,0,0" />
-                                <ScrollViewer HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto" VerticalScrollMode="Disabled" VerticalScrollBarVisibility="Disabled">
-                                    <ItemsRepeater ItemsSource="{x:Bind Candidates}">
-                                        <ItemsRepeater.Layout>
-                                            <StackLayout Orientation="Horizontal" Spacing="8" />
-                                        </ItemsRepeater.Layout>
-                                        <ItemsRepeater.ItemTemplate>
-                                            <DataTemplate x:DataType="local:Candidate">
-                                                <Button Click="Candidate_Click" Padding="4" Background="Transparent"
-                                                        BorderThickness="2" BorderBrush="{x:Bind Border, Mode=OneWay}"
-                                                        ToolTipService.ToolTip="{x:Bind Tooltip}">
-                                                    <StackPanel Spacing="2">
-                                                        <Image Source="{x:Bind Thumb, Mode=OneWay}" Height="72" MinWidth="72" Stretch="Uniform" />
-                                                        <TextBlock Text="{x:Bind Name}" Style="{StaticResource CaptionTextBlockStyle}" HorizontalAlignment="Center" />
-                                                        <TextBlock Text="{x:Bind ScoreText}" FontSize="11" HorizontalAlignment="Center"
-                                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                                                    </StackPanel>
-                                                </Button>
-                                            </DataTemplate>
-                                        </ItemsRepeater.ItemTemplate>
-                                    </ItemsRepeater>
-                                </ScrollViewer>
+                                <ListView ItemsSource="{x:Bind Candidates}" SelectionMode="None" IsItemClickEnabled="True"
+                                          ItemClick="Candidate_ItemClick"
+                                          ScrollViewer.HorizontalScrollMode="Auto" ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                                          ScrollViewer.VerticalScrollMode="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled">
+                                    <ListView.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Horizontal" Spacing="8" />
+                                        </ItemsPanelTemplate>
+                                    </ListView.ItemsPanel>
+                                    <ListView.ItemContainerStyle>
+                                        <Style TargetType="ListViewItem" BasedOn="{StaticResource DefaultListViewItemStyle}">
+                                            <Setter Property="Padding" Value="0" />
+                                            <Setter Property="Margin" Value="0" />
+                                            <Setter Property="MinWidth" Value="0" />
+                                        </Style>
+                                    </ListView.ItemContainerStyle>
+                                    <ListView.ItemTemplate>
+                                        <DataTemplate x:DataType="local:Candidate">
+                                            <Border Padding="4" CornerRadius="4" BorderThickness="2" BorderBrush="{x:Bind Border, Mode=OneWay}"
+                                                    ToolTipService.ToolTip="{x:Bind Tooltip}">
+                                                <StackPanel Spacing="2">
+                                                    <Image Source="{x:Bind Thumb, Mode=OneWay}" Height="72" MinWidth="72" Stretch="Uniform" />
+                                                    <TextBlock Text="{x:Bind Name}" Style="{StaticResource CaptionTextBlockStyle}" HorizontalAlignment="Center" />
+                                                    <TextBlock Text="{x:Bind ScoreText}" FontSize="11" HorizontalAlignment="Center"
+                                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ListView.ItemTemplate>
+                                </ListView>
 
                                 <AutoSuggestBox PlaceholderText="Not here? Type the file name" Width="260" HorizontalAlignment="Left"
                                                 QueryIcon="Find" TextChanged="Name_TextChanged" QuerySubmitted="Name_QuerySubmitted" />

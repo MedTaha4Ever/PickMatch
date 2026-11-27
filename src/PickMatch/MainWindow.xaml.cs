@@ -392,9 +392,9 @@ public sealed partial class MainWindow : Window
 
     // ---------- choosing ----------
 
-    async void Candidate_Click(object sender, RoutedEventArgs e)
+    async void Candidate_ItemClick(object sender, ItemClickEventArgs e)
     {
-        if ((sender as FrameworkElement)?.DataContext is Candidate c) await ChooseAsync(c.Owner, c);
+        if (e.ClickedItem is Candidate c) await ChooseAsync(c.Owner, c);
     }
 
     async Task ChooseAsync(PairItem item, Candidate c)
