@@ -12,13 +12,13 @@
   IgnorableNamespaces="uap rescap">
 
   <Identity
-    Name="PickMatch.Placeholder"
-    Publisher="CN=00000000-0000-0000-0000-000000000000"
+    Name="TahaforMultimediaProducti.PickMatch"
+    Publisher="CN=51631B2E-D7DA-4501-916E-DEBC0DC16EA7"
     Version="3.1.0.0" />
 
   <Properties>
     <DisplayName>PickMatch</DisplayName>
-    <PublisherDisplayName>PickMatch</PublisherDisplayName>
+    <PublisherDisplayName>TahaProd</PublisherDisplayName>
     <Logo>Assets\Store\StoreLogo.png</Logo>
   </Properties>
 
